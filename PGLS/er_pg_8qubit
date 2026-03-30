@@ -1,0 +1,2 @@
+/var/spool/slurm/job675040/slurm_script: line 13: 1802203 Killed                  python SLS_potentials_v2_8qubit.py
+slurmstepd: error: Detected 1 oom-kill event(s) in StepId=675040.batch. Some of your processes may have been killed by the cgroup out-of-memory handler.

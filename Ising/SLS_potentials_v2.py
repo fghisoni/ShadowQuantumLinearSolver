@@ -5,10 +5,11 @@ import math
 from Pauli_algebra_v3 import * 
 from Ising_Inspired_QLSP import *
 from scipy.optimize import minimize
+import time
 
 task_number = 1
 
-seed = 1
+seed = 10
 np.random.seed(seed)
 
 n = 4
@@ -97,10 +98,17 @@ def circuit_fielity(parameters):
     apply_fixed_ansatz(qubit_wires, parameters, layers)
     return qml.state()
 
-def calc_fidelity(state_vec):
+def calc_fidelity_old(state_vec):
     Aprodx = np.matmul(A, state_vec)
     Aprodx_norm = Aprodx/np.linalg.norm(Aprodx)  
     fidelity = np.linalg.norm(np.dot(np.array(b), Aprodx_norm))
+    return fidelity
+
+def calc_fidelity(state_vec):
+    Ainv = np.linalg.inv(A)
+    Ainvprodb = np.matmul(Ainv,b)
+    Ainvprodb_norm = Ainvprodb/np.linalg.norm(Ainvprodb)  
+    fidelity = np.dot(np.array(Ainvprodb_norm), state_vec)
     return fidelity
 
 def calculate_cost_function(parameters):
@@ -112,47 +120,35 @@ def calculate_cost_function(parameters):
     cost = 0.5-(1/(2*n))*(np.linalg.norm(overall_sum_2)/np.linalg.norm(overall_sum_1))
     res = circuit_fielity(parameters)
     fidelity = calc_fidelity(res)
-    fidelity_values.append(fidelity._value.item())
-    cost_function_values.append(cost._value.item())
-    print(cost._value.item())
+    fidelity_values.append(fidelity.real)
+    cost_function_values.append(cost.real)
+    print(fidelity)
     return cost
 
 condition = False
-opt = qml.AdamOptimizer(stepsize=0.1)
 params_f = np.copy(params)
 
 while condition==False:
-    params_f, cost = opt.step_and_cost(calculate_cost_function, params_f)
+    out = minimize(calculate_cost_function, x0= params_f, method="Powell", options={'maxiter':1})
+    params_f = out['x']
 
-    if any(val > 1-error for val in fidelity_values)==True:
+    if any(val.real > 1-error for val in fidelity_values)==True:
         condition = True
-    
-    if cost < 0.1:
-        opt = qml.AdamOptimizer(stepsize=0.01)
-    elif cost < 0.01:
-        opt = qml.AdamOptimizer(stepsize=0.001)
-    elif cost < 0.001:
-        opt = qml.AdamOptimizer(stepsize=0.0001)
-    elif cost < 0.0001:
-        opt = qml.AdamOptimizer(stepsize=0.00001)
 
-    evals = int(len(cost_function_values))
-    if evals%10 == 0:
-        fname = f'Random_{n}qubits_{shadow_error}serr_costs_{seed}seed_Powell'
-        np.save(fname, np.array(cost_function_values))
+fname = f'4qubit/Ising_{n}qubits_{shadow_error}serr_costs_{seed}seed_Powell.txt'
+with open(fname,'w') as f:
+    for i in cost_function_values:
+        f.write(str(i))
+        f.write('\n')
 
-        fname = f'Random_{n}qubits_{shadow_error}serr_fidelity_{seed}seed_Powell'
-        np.save(fname, np.array(fidelity_values))
+fname = f'4qubit/Ising_{n}qubits_{shadow_error}serr_fidelity_{seed}seed_Powell.txt'
+with open(fname,'w') as f:
+    for i in fidelity_values:
+        f.write(str(i)) 
+        f.write('\n')
 
-        fname = f'Random_{n}qubits_{shadow_error}serr_params_{seed}seed_Powell'
-        np.save(fname, np.array(params_f))
-
-                
-fname = f'Ising_{n}qubits_{shadow_error}serr_costs_{seed}seed_Powell'
-np.save(fname, np.array(cost_function_values))
-
-fname = f'Ising_{n}qubits_{shadow_error}serr_fidelity_{seed}seed_Powell'
-np.save(fname, np.array(fidelity_values))
-
-fname = f'Ising_{n}qubits_{shadow_error}serr_params_{seed}seed_Powell'
-np.save(fname, np.array(params_f))
+fname = f'4qubit/Ising_{n}qubits_{shadow_error}serr_params_{seed}seed_Powell.txt'
+with open(fname,'w') as f:
+    for i in params:
+        f.write(str(i)) 
+        f.write('\n')
