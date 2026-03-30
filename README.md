@@ -2,6 +2,13 @@
 
 Codebase for reproducing the numerical experiments of the Shadow Quantum Linear Solver (SQLS) and its comparison against Hadamard-test VQLS baselines on several quantum linear system problem classes.
 
+## Associated Paper
+
+This repository accompanies the following paper:
+
+**Resource-efficient quantum algorithm for linear systems of equations**  
+[Physical Review A (2026)](https://journals.aps.org/pra/pdf/10.1103/gwzg-4pls)
+
 ## Repository structure
 
 - `Ising/`  
